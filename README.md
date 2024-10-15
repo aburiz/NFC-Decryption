@@ -10,6 +10,7 @@
    - [Data Extraction](#data-extraction)
    - [Key Extraction and Dictionary Attack](#key-extraction-and-dictionary-attack)
    - [Data Analysis and Value Location](#data-analysis-and-value-location)
+   - [Data Format and Mark Bytes](#data-format-and-mark-bytes)
    - [Data Modification](#data-modification)
 5. [Writing Modified Data](#writing-modified-data)
 6. [Final Results](#final-results)
@@ -101,6 +102,119 @@ The following tools and equipment were used throughout the project:
 
 2. **Hexadecimal Representation**:
    - The structured format of the extracted data allowed me to trace the hexadecimal representations of values stored across different sectors. I documented the layout of the sectors, identifying that the values were consistently located in specific byte positions.
+Sure! Here’s an expanded section for your documentation that covers mark bytes, format calculation, and their significance in the context of reading and writing data on MIFARE Classic cards. 
+
+---
+
+### Data Format and Mark Bytes
+
+In addition to extracting and modifying values stored on the NFC card, understanding the data format and how information is structured is crucial for successful interaction with MIFARE Classic cards. This section outlines the importance of mark bytes and the calculations used to determine the formatted data values.
+
+#### Mark Bytes
+
+Mark bytes are specific values that serve as indicators of the data type or structure within a block of data on the NFC card. For MIFARE Classic cards, these bytes are typically used to signal the beginning and end of a data block, ensuring that the reader interprets the data correctly. They can also indicate the format in which the data is stored.
+
+**Structure of MIFARE Classic Data Blocks:**
+- Each block on a MIFARE Classic card is 16 bytes long.
+- The first byte often serves as a mark byte, indicating the type of data stored in the block (e.g., whether it's a monetary value, user data, or access control information).
+- The subsequent bytes contain the actual data, and the last few bytes may include checksum information for error checking.
+
+For example, the structure of a block might look like this:
+
+```
++-----------+------------+----------+-----------+
+| Mark Byte | Data Bytes | ...      | Checksum  |
++-----------+------------+----------+-----------+
+```
+
+#### Format Calculation
+
+To ensure proper interpretation and manipulation of the values stored on the card, it is essential to understand how the data is formatted. The MIFARE Classic card employs a specific format for storing numerical values, especially when dealing with monetary values. 
+
+When representing a monetary value, the following formula is typically used:
+
+
+**Value** = **Hexadecimal Value/100**
+
+
+For instance, if the hexadecimal representation of a monetary value is **0x081B** (which translates to **2075** in decimal), the value can be calculated as:
+
+
+**Monetary Value = 2075/100 = 20.75**
+
+
+This format ensures that the NFC reader interprets the data correctly when reading the value stored on the card. 
+
+#### Example of Data Formatting
+
+Given a block of data that includes a monetary value, the process for formatting the data might involve:
+
+1. **Identifying the Mark Byte**:
+   - The first byte indicates that the following data block contains a monetary value. For example, a mark byte of **0x01** may signify a financial record.
+
+2. **Calculating the Monetary Value**:
+   - If the subsequent bytes are **0x1B 08**, this hexadecimal value is converted to decimal (2075), and then the monetary value is calculated as follows:
+
+  **Monetary Value = 2075/100 = 20.75**
+
+
+3. **Writing Back to the Card**:
+   - When modifying the value, it’s crucial to maintain the structure. The modified value of **$20.75** must be converted back into the appropriate hexadecimal format (i.e., **0x081B**), ensuring the first byte indicates it’s a monetary record.
+
+4. **Final Data Structure**:
+   - The updated block for writing back to the card would thus look like:
+   ```
+   +-----------+------------+----------+-----------+
+   | 0x01     | 0x1B 0x08  | ...      | Checksum  |
+   +-----------+------------+----------+-----------+
+   ```
+   
+# Mark Bytes and Format Calculation for MIFARE Classic NFC Cards
+
+The NFC card data structure often includes **mark bytes** that indicate how the numeric values are formatted. For **MIFARE Classic** cards, the numeric values are typically stored as 4 bytes in a specific format:
+
+- **Byte 0 and Byte 1**: Store the integer part of the value.
+- **Byte 2**: Represents the decimal part (0-99), multiplied by 100 for precision.
+- **Byte 3**: Reserved or additional flags.
+
+### Formula to Calculate the Actual Value
+
+To interpret a value from the stored bytes, the following formula is used:
+
+```
+Value = (Byte_0 × 256 + Byte_1) + (Byte_2 / 100)
+```
+
+### Example
+
+Consider the extracted bytes: `1B 08 00 00`.
+
+Using the formula, the calculation would be:
+
+1. **Convert Bytes to Decimal Values:**
+   - `1B (hex) = 27 (decimal)`
+   - `08 (hex) = 8 (decimal)`
+   - `00 (hex) = 0 (decimal)`
+
+2. **Apply the Formula:**
+   ```
+   Value = (27 × 256 + 8) + (0 / 100)
+         = (6912 + 8) + 0
+         = 6920
+         = 69.20
+   ```
+
+Thus, the value stored on the card is **69.20**.
+
+**Summary**
+
+This format ensures that:
+- **Byte 0 and Byte 1** are used to calculate the integer portion of the value.
+- **Byte 2** stores the decimal part for precision, though it is often 0.
+- **Byte 3** is reserved for additional flags or unused data.
+
+Understanding the mark byte format and the calculation process is crucial for correctly interpreting and modifying monetary values stored on a MIFARE Classic NFC card.
+By properly structuring the data with the appropriate mark bytes and formatting, the NFC reader is able to accurately read and interpret the values stored on the MIFARE Classic card. This understanding is crucial for both the extraction and manipulation phases of this project.
 
 ### Data Modification
 
